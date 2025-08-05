@@ -42,6 +42,7 @@ services:
     - logvolume:/var/log
     - couchdbvolume:/couchdb/data
     environment:
+      OPENEMR_ENABLE_CCDA_IMPORT: 1
       DEBUG_COLORS: "true"
       TERM: xterm-256color
       COLORTERM: truecolor
