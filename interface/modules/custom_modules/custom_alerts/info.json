@@ -1,0 +1,7 @@
+{
+  "name": "Custom Alerts",
+  "author": "Chirag",
+  "description": "Shows custom alerts when viewing patient charts",
+  "version": "1.0.0",
+  "category": ["Clinical"]
+}
