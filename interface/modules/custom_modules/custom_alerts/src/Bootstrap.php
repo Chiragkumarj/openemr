@@ -1,6 +1,24 @@
+<?php
+
+namespace OpenEMR\Modules\CustomAlerts;
+
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+
+class Bootstrap
+{
+    protected $dispatcher;
+    
+    protected $kernel;
+
+    public function __construct(EventDispatcherInterface $dispatcher, $kernel)
+    {
+        $this->dispatcher = $dispatcher;
+        $this->kernel = $kernel;
+    }
+
 public function subscribeToEvents()
 {
-    error_log("✅ CustomAlerts module subscribed to events");
+    error_log("CustomAlerts module subscribed to events");
 
     // Try multiple possible events
     $this->dispatcher->addListener('patient.load.after', [$this, 'showAlert']);
@@ -9,7 +27,7 @@ public function subscribeToEvents()
 
 public function showAlert($event)
 {
-    error_log("✅ CustomAlerts showAlert triggered");
+    error_log(" CustomAlerts showAlert triggered");
 
     $pid = method_exists($event, 'getPid') ? $event->getPid() : null;
     error_log("Patient ID: " . print_r($pid, true));
@@ -22,14 +40,16 @@ public function showAlert($event)
     $res = sqlQuery($sql, [$pid]);
 
     if ($res) {
-        error_log("✅ Patient found: " . $res['fname'] . " " . $res['lname']);
+        error_log("Patient found: " . $res['fname'] . " " . $res['lname']);
         $name = $res['fname'] . ' ' . $res['lname'];
         $dob  = $res['DOB'];
         $age  = (int)((time() - strtotime($dob)) / 31556926);
 
         if ($age > 50) {
-            error_log("⚠️ Triggering alert for $name age $age");
+            error_log(" Triggering alert for $name age $age");
             require(__DIR__ . '/../views/alert.php');
         }
     }
+}
+
 }
