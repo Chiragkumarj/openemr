@@ -1,41 +1,35 @@
-<?php
-
-namespace OpenEMR\Modules\CustomAlerts;
-
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-
-class Bootstrap
+public function subscribeToEvents()
 {
-    protected $dispatcher;
-    protected $kernel;
+    error_log("✅ CustomAlerts module subscribed to events");
 
-    public function __construct(EventDispatcherInterface $dispatcher, $kernel)
-    {
-        $this->dispatcher = $dispatcher;
-        $this->kernel = $kernel;
+    // Try multiple possible events
+    $this->dispatcher->addListener('patient.load.after', [$this, 'showAlert']);
+    $this->dispatcher->addListener('patient.summary.after', [$this, 'showAlert']);
+}
+
+public function showAlert($event)
+{
+    error_log("✅ CustomAlerts showAlert triggered");
+
+    $pid = method_exists($event, 'getPid') ? $event->getPid() : null;
+    error_log("Patient ID: " . print_r($pid, true));
+
+    if (!$pid) {
+        return;
     }
 
-    public function subscribeToEvents()
-    {
-        // Hook into patient summary load
-        $this->dispatcher->addListener('patient.summary.load', [$this, 'showAlert']);
-    }
+    $sql = "SELECT fname, lname, DOB FROM patient_data WHERE pid = ?";
+    $res = sqlQuery($sql, [$pid]);
 
-    public function showAlert($event)
-    {
-        $pid = $event->getPid();
+    if ($res) {
+        error_log("✅ Patient found: " . $res['fname'] . " " . $res['lname']);
+        $name = $res['fname'] . ' ' . $res['lname'];
+        $dob  = $res['DOB'];
+        $age  = (int)((time() - strtotime($dob)) / 31556926);
 
-        $sql = "SELECT fname, lname, DOB FROM patient_data WHERE pid = ?";
-        $res = sqlQuery($sql, [$pid]);
-
-        if ($res) {
-            $name = $res['fname'] . ' ' . $res['lname'];
-            $dob  = $res['DOB'];
-            $age  = (int)((time() - strtotime($dob)) / 31556926);
-
-            if ($age > 50) {
-                require(__DIR__ . '/../views/alert.php');
-            }
+        if ($age > 50) {
+            error_log("⚠️ Triggering alert for $name age $age");
+            require(__DIR__ . '/../views/alert.php');
         }
     }
 }
